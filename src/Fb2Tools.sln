@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -6,6 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fb2Zip", "Fb2Zip\Fb2Zip.csproj", "{09E41C14-98FE-4961-B0CC-65574B3954FF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fb2Opds", "Fb2Opds\Fb2Opds.csproj", "{2AEEBE4B-3CB2-466B-9791-847946377FCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fb2Books", "Fb2Books\Fb2Books.csproj", "{D03CD99E-9541-4D63-A2FC-7AC4FA340959}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,18 @@ Global
 		{2AEEBE4B-3CB2-466B-9791-847946377FCC}.Release|x64.Build.0 = Release|Any CPU
 		{2AEEBE4B-3CB2-466B-9791-847946377FCC}.Release|x86.ActiveCfg = Release|Any CPU
 		{2AEEBE4B-3CB2-466B-9791-847946377FCC}.Release|x86.Build.0 = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|x64.Build.0 = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Debug|x86.Build.0 = Debug|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|x64.ActiveCfg = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|x64.Build.0 = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|x86.ActiveCfg = Release|Any CPU
+		{D03CD99E-9541-4D63-A2FC-7AC4FA340959}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

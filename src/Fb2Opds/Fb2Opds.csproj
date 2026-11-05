@@ -23,4 +23,8 @@
         <PackageReference Include="StbImageWriteSharp" />
         <PackageReference Include="System.CommandLine" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Fb2Books\Fb2Books.csproj" />
+    </ItemGroup>
 </Project>

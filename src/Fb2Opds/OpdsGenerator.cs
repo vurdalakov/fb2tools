@@ -68,7 +68,7 @@
             {
                 try
                 {
-                    var bookInfo = Fb2InfoReader.Read(fileInfo);
+                    var bookInfo = BookInfoReader.Read(fileInfo);
 
                     opdsGenerator.AddFileEntry(bookInfo);
 

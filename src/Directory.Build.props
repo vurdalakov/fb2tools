@@ -61,6 +61,13 @@
         </When>
     </Choose>
 
+    <!-- Symbols and XML documentation of referenced projects (e.g. Fb2Books) are not needed next to the single-file executables -->
+    <Target Name="RemoveSymbolsAndDocumentationFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+        <ItemGroup>
+            <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb' OR '%(Extension)' == '.xml'" />
+        </ItemGroup>
+    </Target>
+
     <PropertyGroup>
         <DefineConstants Condition="'$(OS)'=='Windows_NT'">$(DefineConstants);WINDOWS</DefineConstants>
         <DefineConstants Condition="'$(OS)'!='Windows_NT'">$(DefineConstants);MACOS</DefineConstants>

@@ -2,6 +2,12 @@
 
 [Fb2Tools](https://github.com/vurdalakov/fb2tools) repository contains tools to work with .FB2/.FB2.ZIP files and generate OPDS catalogs out of them.
 
+Projects (sources in `src\`):
+
+* `Fb2Zip` - the `fb2zip` command-line tool.
+* `Fb2Opds` - the `fb2opds` command-line tool.
+* `Fb2Books` - class library shared by both: reads FB2 metadata (`Fb2InfoReader`, `Fb2Info`: author, translator, title, series, language, annotation, document id, cover image) and builds/compares the `Author - [Series, volume] - Title` file names (`Fb2FileName`). It has no dependencies besides the .NET base class library.
+
 ## fb2zip
 
 Command-line utility that finds zip files that are not plain "Deflate + UTF-8 names" (algorithms not supported by the .NET 10 `ZipFile` class, missing UTF-8 flag) and repacks them; also packs `.fb2` files that have no `.fb2.zip`.
@@ -11,7 +17,8 @@ Command-line utility that finds zip files that are not plain "Deflate + UTF-8 na
 * `fb2zip test <folder>`   - reports problems and changes nothing:
   * zip entries compressed with anything but Deflate;
   * zip entries with a non-ASCII name but without the UTF-8 flag (ASCII-only names do not need it);
-  * `.fb2` files without a matching `.fb2.zip`.
+  * `.fb2` files without a matching `.fb2.zip`;
+  * `.fb2` / `.fb2.zip` files whose name does not follow the book's XML (see below).
 * `fb2zip repack <folder>` - repacks zip files that have either of the first two problems, so that all entries use Deflate and UTF-8 names.
 * `fb2zip pack <folder>`   - creates `<name>.fb2.zip` (Deflate, UTF-8 name) for every `<name>.fb2` that has none. The `.fb2` is kept.
 
@@ -24,6 +31,24 @@ Options (`test`, `repack` and `pack` each accept `--help`):
 Deflate is the only accepted compression method. Everything else (Stored, Deflate64, BZip2, LZMA, PPMd, Zstandard, XZ, Shrink, Implode, ...) is reported and repacked to Deflate. Directory entries are ignored. Encrypted entries are reported but cannot be repacked.
 
 Each repacked archive is verified (names, sizes, CRC32) before it replaces the original.
+
+### File name check
+
+`fb2zip test` reads the `<title-info>` of every `.fb2` file (and of the single `.fb2` inside every `.fb2.zip`) and checks that the file name is:
+
+* `Author - Title.fb2`, or
+* `Author - [Series, volume] - Title.fb2` when the book has a `<sequence>`; `[Series]` if the sequence has no `number`.
+
+Examples:
+
+* `Амитав Гош - Стеклянный дворец.fb2`
+* `Виктор Дашкевич - [Колдун Российской империи, 2] - Императорский див.fb2`
+
+Rules:
+
+* `Author` is the first `<author>`: `first-name` + `last-name` (the middle name is ignored; `nickname` is used if there is no real name). `Title` is `<book-title>`, `Series`/`volume` come from the first `<sequence>` (`name` and `number` attributes).
+* Both sides are compared Unicode-normalized, with white space collapsed and ignoring characters that cannot be in a file name (`\ / : * ? " < > |`) and `_`. Letter case matters.
+* Files whose XML cannot be read, or that have no author or title, are reported too. A mismatch is shown with the expected name.
 
 ## fb2opds
 

@@ -19,17 +19,20 @@
                 + "  - entry compressed with anything but Deflate (Stored, Deflate64, BZip2, LZMA, PPMd, ...)\n"
                 + "  - non-ASCII entry name without the UTF-8 flag\n"
                 + "Problem reported by 'test' and fixed by 'pack':\n"
-                + "  - .fb2 file without a matching .fb2.zip\n\n"
+                + "  - .fb2 file without a matching .fb2.zip\n"
+                + "Problem reported by 'test' only:\n"
+                + "  - .fb2 / .fb2.zip file name that does not follow the book (title-info author, title, sequence):\n"
+                + "    'Author - Title' or 'Author - [Series, volume] - Title'\n\n"
                 + "Encrypted entries are reported but cannot be repacked.");
 
-            rootCommand.Subcommands.Add(Program.CreateCommand("test", "Report problems, change nothing", true, true, false));
-            rootCommand.Subcommands.Add(Program.CreateCommand("repack", "Repack zip files that have problems (original is replaced in place)", true, false, true));
-            rootCommand.Subcommands.Add(Program.CreateCommand("pack", "Create <name>.fb2.zip for every <name>.fb2 that has none", false, true, true));
+            rootCommand.Subcommands.Add(Program.CreateCommand("test", "Report problems, change nothing", true, true, false, true));
+            rootCommand.Subcommands.Add(Program.CreateCommand("repack", "Repack zip files that have problems (original is replaced in place)", true, false, true, false));
+            rootCommand.Subcommands.Add(Program.CreateCommand("pack", "Create <name>.fb2.zip for every <name>.fb2 that has none", false, true, true, false));
 
             return rootCommand.Parse(args).Invoke();
         }
 
-        private static Command CreateCommand(String name, String description, Boolean processZipFiles, Boolean processFb2Files, Boolean fix)
+        private static Command CreateCommand(String name, String description, Boolean processZipFiles, Boolean processFb2Files, Boolean fix, Boolean checkFb2Names)
         {
             var command = new Command(name, description);
 
@@ -73,12 +76,13 @@
                 (backupOption != null) && parseResult.GetValue(backupOption),
                 processZipFiles,
                 processFb2Files,
-                fix));
+                fix,
+                checkFb2Names));
 
             return command;
         }
 
-        private static Int32 Run(String folder, Boolean recurse, String encodingName, Boolean backup, Boolean processZipFiles, Boolean processFb2Files, Boolean fix)
+        private static Int32 Run(String folder, Boolean recurse, String encodingName, Boolean backup, Boolean processZipFiles, Boolean processFb2Files, Boolean fix, Boolean checkFb2Names)
         {
             if (!Directory.Exists(folder))
             {
@@ -114,6 +118,11 @@
             if (processFb2Files)
             {
                 failed += Program.ProcessFb2Files(folder, searchOption, fix);
+            }
+
+            if (checkFb2Names)
+            {
+                Fb2NameCheck.Run(folder, searchOption);
             }
 
             if (failed > 0)

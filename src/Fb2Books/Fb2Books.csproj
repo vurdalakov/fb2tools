@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <!-- single-file publishing applies to the executables that reference this library -->
+        <PublishSingleFile>false</PublishSingleFile>
+        <IsPublishable>false</IsPublishable>
+        <Description>FB2 e-book metadata reading and file naming</Description>
+    </PropertyGroup>
+
+</Project>
