@@ -30,7 +30,7 @@
         public String FolderImageUrl { get; }
 
         public String FolderThumbnailUrl { get; }
-            
+
         public SiteInfo(String baseDirectoryPath, String baseUrl, TextWriter outputWriter)
         {
             this._outputWriter = outputWriter;

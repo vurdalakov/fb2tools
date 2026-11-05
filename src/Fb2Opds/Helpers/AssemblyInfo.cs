@@ -1,40 +1,45 @@
 ﻿namespace Vurdalakov
 {
     using System;
-    using System.IO;
     using System.Reflection;
 
-    internal class AssemblyInfo
+    internal sealed class AssemblyInfo
     {
-        public String FileName { get; private set; }
+        public String FileName { get; }
 
-        public String Product { get; private set; }
+        public String Product { get; }
 
-        public Version Version { get; private set; }
+        public Version Version { get; }
 
-        public String Company { get; private set; }
+        public String Company { get; }
 
-        public String Copyright { get; private set; }
+        public String Copyright { get; }
 
-        public String Description { get; private set; }
+        public String Description { get; }
+
+        private AssemblyInfo(Assembly assembly)
+        {
+            var assemblyName = assembly.GetName();
+
+            // Assembly.Location is empty in single-file apps, so the name comes from the assembly identity
+            this.FileName = assemblyName.Name;
+            this.Version = assemblyName.Version;
+
+            this.Product = NullIfEmpty(assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product) ?? this.FileName;
+            this.Company = NullIfEmpty(assembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company);
+            this.Copyright = NullIfEmpty(assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright);
+            this.Description = NullIfEmpty(assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description);
+
+            String NullIfEmpty(String value) => String.IsNullOrWhiteSpace(value) ? null : value;
+        }
 
         public static AssemblyInfo Read() => AssemblyInfo.Read(Assembly.GetExecutingAssembly());
 
         public static AssemblyInfo Read(Assembly assembly)
         {
-            var assemblyPath = assembly.Location;
-            var assemblyFileName = Path.GetFileNameWithoutExtension(assemblyPath);
-            var assemblyName = assembly.GetName();
+            ArgumentNullException.ThrowIfNull(assembly);
 
-            return new AssemblyInfo
-            {
-                FileName = assemblyFileName,
-                Product = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product,
-                Version = assemblyName?.Version,
-                Company = assembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company,
-                Copyright = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright,
-                Description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description,
-            };
+            return new AssemblyInfo(assembly);
         }
     }
 }

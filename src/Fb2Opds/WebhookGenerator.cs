@@ -2,7 +2,6 @@
 {
     using System;
     using System.IO;
-    using System.Reflection;
     using System.Text;
 
     internal static class WebhookGenerator
@@ -37,12 +36,12 @@
         private static String[] GetSelfInvocationCommand()
         {
             var processPath = Environment.ProcessPath;
-            var entryAssemblyLocation = Assembly.GetEntryAssembly()?.Location;
 
-            var needsSeparateHost = !String.IsNullOrEmpty(entryAssemblyLocation)
-                && !String.Equals(processPath, entryAssemblyLocation, StringComparison.OrdinalIgnoreCase);
+            // Started as "dotnet App.dll": the process is the dotnet host and the first command line argument is the dll.
+            // Started as an executable (apphost or single-file): the process itself is the app.
+            var isDotnetHost = String.Equals(Path.GetFileNameWithoutExtension(processPath), "dotnet", StringComparison.OrdinalIgnoreCase);
 
-            return needsSeparateHost ? new[] { processPath, entryAssemblyLocation } : new[] { processPath };
+            return isDotnetHost ? new[] { processPath, Path.GetFullPath(Environment.GetCommandLineArgs()[0]) } : new[] { processPath };
         }
 
         private static String PhpString(String value) => "'" + value.Replace("\\", "\\\\").Replace("'", "\\'") + "'";

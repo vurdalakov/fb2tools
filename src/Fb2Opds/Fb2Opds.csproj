@@ -18,7 +18,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="SixLabors.ImageSharp" />
+        <PackageReference Include="StbImageSharp" />
+        <PackageReference Include="StbImageResizeSharp" />
+        <PackageReference Include="StbImageWriteSharp" />
         <PackageReference Include="System.CommandLine" />
     </ItemGroup>
 </Project>

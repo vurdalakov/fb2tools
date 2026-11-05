@@ -6,8 +6,9 @@
     using System.Security.Cryptography;
     using System.Text;
 
-    using SixLabors.ImageSharp;
-    using SixLabors.ImageSharp.Processing;
+    using StbImageResizeSharp;
+    using StbImageSharp;
+    using StbImageWriteSharp;
 
     internal static class Helpers
     {
@@ -104,6 +105,7 @@
         }
 
         private const Int32 MaxThumbnailSize = 200;
+        private const Int32 ThumbnailJpegQuality = 85;
 
         public static void SaveBookImages(this BookInfo bookInfo, Byte[] imageBytes, String fileName)
         {
@@ -126,27 +128,50 @@
 
         public static void SaveThumbnailImage(Byte[] imageBytes, String thumbnailFilePath)
         {
-            using var image = Image.Load(imageBytes);
+            // PNG keeps the alpha channel, JPEG has none
+            var isPng = Path.GetExtension(thumbnailFilePath).Equals(".png", StringComparison.OrdinalIgnoreCase);
+            var channels = isPng ? 4 : 3;
+            var readComponents = isPng ? StbImageSharp.ColorComponents.RedGreenBlueAlpha : StbImageSharp.ColorComponents.RedGreenBlue;
+            var writeComponents = isPng ? StbImageWriteSharp.ColorComponents.RedGreenBlueAlpha : StbImageWriteSharp.ColorComponents.RedGreenBlue;
 
-            if ((image.Width <= MaxThumbnailSize) && (image.Height <= MaxThumbnailSize))
+            var image = ImageResult.FromMemory(imageBytes, readComponents);
+
+            var width = image.Width;
+            var height = image.Height;
+            var data = image.Data;
+
+            var scale = Math.Min((Double)Helpers.MaxThumbnailSize / width, (Double)Helpers.MaxThumbnailSize / height);
+
+            if (scale < 1.0)
             {
-                image.Save(thumbnailFilePath);
-                return;
+                var newWidth = Math.Max(1, (Int32)(width * scale));
+                var newHeight = Math.Max(1, (Int32)(height * scale));
+
+                var resizedData = new Byte[newWidth * newHeight * channels];
+
+                if (0 == StbImageResize.stbir_resize_uint8(data, width, height, width * channels, resizedData, newWidth, newHeight, newWidth * channels, channels))
+                {
+                    throw new InvalidOperationException("Failed to resize image.");
+                }
+
+                data = resizedData;
+                width = newWidth;
+                height = newHeight;
             }
 
-            var scale = Math.Min((Double)MaxThumbnailSize / image.Width, (Double)MaxThumbnailSize / image.Height);
-
-            if (scale >= 1.0)
+            using (var stream = File.Create(thumbnailFilePath))
             {
-                image.Save(thumbnailFilePath);
-                return;
+                var writer = new ImageWriter();
+
+                if (isPng)
+                {
+                    writer.WritePng(data, width, height, writeComponents, stream);
+                }
+                else
+                {
+                    writer.WriteJpg(data, width, height, writeComponents, stream, Helpers.ThumbnailJpegQuality);
+                }
             }
-
-            var newWidth = (Int32)(image.Width * scale);
-            var newHeight = (Int32)(image.Height * scale);
-
-            image.Mutate(x => x.Resize(newWidth, newHeight));
-            image.Save(thumbnailFilePath);
         }
     }
 }

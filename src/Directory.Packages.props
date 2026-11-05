@@ -11,7 +11,9 @@
     <PackageVersion Include="System.IO.Hashing" Version="10.0.14" />
   </ItemGroup>
   <ItemGroup Label="Fb2Opds">
-    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageVersion Include="StbImageSharp" Version="2.30.16" />
+    <PackageVersion Include="StbImageResizeSharp" Version="0.97.1" />
+    <PackageVersion Include="StbImageWriteSharp" Version="1.16.7" />
     <PackageVersion Include="System.CommandLine" Version="2.0.14" />
   </ItemGroup>
 </Project>
