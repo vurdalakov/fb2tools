@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Fb2Opds": {
+      "commandName": "Project",
+      "commandLineArgs": "--path \"P:\\fb2\" --url \"https://balagurov.com/fb2\" --name \"My books\""
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    }
+  }
+}

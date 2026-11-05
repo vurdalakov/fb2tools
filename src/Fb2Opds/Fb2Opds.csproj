@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>fb2opds</AssemblyName>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Product>OPDS catalog generator</Product>
+        <Description>Generates OPDS catalog from a digital book collection</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\book1.png" />
+        <EmbeddedResource Include="Resources\book2.png" />
+        <EmbeddedResource Include="Resources\folder1.png" />
+        <EmbeddedResource Include="Resources\folder2.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SixLabors.ImageSharp" />
+        <PackageReference Include="System.CommandLine" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,67 @@
+<Project>
+  
+    <PropertyGroup>
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <TargetFramework>net10.0</TargetFramework>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>false</SelfContained>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <RootNamespace>Vurdalakov</RootNamespace>
+        <WarningLevel>4</WarningLevel>
+        <Deterministic>false</Deterministic>
+        <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+        <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>false</SelfContained>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BuildYear>$([System.DateTime]::Now.ToString('yyyy'))</BuildYear>
+        <VersionBuild>$([System.DateTime]::UtcNow.Subtract($([System.DateTime]::new(2001,1,1))).TotalDays.ToString("0"))</VersionBuild>
+        <VersionRevision>$([System.DateTime]::UtcNow.TimeOfDay.TotalMinutes.ToString("0"))</VersionRevision>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <Company>Vurdalakov</Company>
+        <Authors>$(Company)</Authors>
+        <Copyright>Copyright (c) $(BuildYear) $(Company). All rights reserved.</Copyright>
+        <Version>1.0.$(VersionBuild).$(VersionRevision)</Version>
+        <InformationalVersion Condition="'$(Configuration)' == 'Debug'">$(Version)-debug</InformationalVersion>
+        <InformationalVersion Condition="'$(Configuration)' != 'Debug'">$(Version)</InformationalVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">
+        <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <AppendRuntimeIdentifierToOutputPath>true</AppendRuntimeIdentifierToOutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <BaseBuildPath>$([System.IO.Path]::GetFullPath($(SolutionDir)..))</BaseBuildPath>
+        <BaseIntermediateOutputPath>$(BaseBuildPath)\obj\$(MSBuildProjectName)\$(Configuration)\</BaseIntermediateOutputPath>
+        <OutputPath>$(BaseBuildPath)\bin\$(Configuration)\</OutputPath>
+    </PropertyGroup>
+
+    <Choose>
+        <When Condition="'$(MSBuildProjectExtension)'=='.csproj'">
+            <ItemGroup>
+                <PackageReference Include="StyleCop.Analyzers" />
+                <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" />
+            </ItemGroup>
+        </When>
+    </Choose>
+
+    <PropertyGroup>
+        <DefineConstants Condition="'$(OS)'=='Windows_NT'">$(DefineConstants);WINDOWS</DefineConstants>
+        <DefineConstants Condition="'$(OS)'!='Windows_NT'">$(DefineConstants);MACOS</DefineConstants>
+    </PropertyGroup>
+
+</Project>
