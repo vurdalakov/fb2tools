@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using System.IO.Compression;
     using System.Linq;
     using System.Text;
     using System.Xml;
@@ -16,6 +17,30 @@
 
         // Reads title-info only and stops at its end, so large files are read quickly
         public static Fb2Info Read(Stream stream) => Fb2InfoReader.Read(stream, false);
+
+        // Reads a .fb2 file, or the single .fb2 inside a .fb2.zip (the entry must use a compression method supported by .NET)
+        public static Fb2Info ReadFile(String filePath, Boolean readCover = false)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(filePath);
+
+            if (!filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                using (var fileStream = File.OpenRead(filePath))
+                {
+                    return Fb2InfoReader.Read(fileStream, readCover);
+                }
+            }
+
+            using (var archive = ZipFile.OpenRead(filePath))
+            {
+                var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".fb2", StringComparison.OrdinalIgnoreCase)) ?? throw new InvalidDataException("No .fb2 entry in zip.");
+
+                using (var entryStream = entry.Open())
+                {
+                    return Fb2InfoReader.Read(entryStream, readCover);
+                }
+            }
+        }
 
         // With readCover, also reads document-info/id and the cover image (stored at the end of the file)
         public static Fb2Info Read(Stream stream, Boolean readCover)
@@ -97,11 +122,19 @@
                         switch (reader.LocalName)
                         {
                             case "author":
-                                info.Author ??= Fb2InfoReader.GetPersonName(Fb2InfoReader.ReadElement(reader));
+                                if (info.Author == null)
+                                {
+                                    (info.AuthorFirstName, info.AuthorLastName, info.Author) = Fb2InfoReader.ReadPerson(Fb2InfoReader.ReadElement(reader));
+                                }
+
                                 break;
 
                             case "translator":
-                                info.Translator ??= Fb2InfoReader.GetPersonName(Fb2InfoReader.ReadElement(reader));
+                                if (info.Translator == null)
+                                {
+                                    (info.TranslatorFirstName, info.TranslatorLastName, info.Translator) = Fb2InfoReader.ReadPerson(Fb2InfoReader.ReadElement(reader));
+                                }
+
                                 break;
 
                             case "book-title":
@@ -176,14 +209,15 @@
             }
         }
 
-        // First name + last name; the middle name is not part of a file name. The nickname is used only if there is no real name.
-        private static String GetPersonName(XElement person)
+        // Full name is first name + last name; the middle name is not part of a file name. The nickname is used as the full name only if there is no real name.
+        private static (String FirstName, String LastName, String FullName) ReadPerson(XElement person)
         {
             String Part(String name) => Fb2InfoReader.Clean(person.Elements().FirstOrDefault(e => e.Name.LocalName == name)?.Value);
 
-            var name = Fb2InfoReader.Clean($"{Part("first-name")} {Part("last-name")}");
+            var firstName = Part("first-name");
+            var lastName = Part("last-name");
 
-            return name ?? Part("nickname");
+            return (firstName, lastName, Fb2InfoReader.Clean($"{firstName} {lastName}") ?? Part("nickname"));
         }
 
         // Collapses white space (FB2 titles often contain line breaks); empty text becomes null

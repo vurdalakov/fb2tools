@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Fb2Editor": {
+      "commandName": "Project",
+      "workingDirectory": "P:\\fb2\\_repo"
+    }
+  }
+}

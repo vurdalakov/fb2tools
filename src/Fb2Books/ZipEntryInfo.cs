@@ -1,10 +1,11 @@
 ﻿namespace Vurdalakov
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     /// <summary>One central-directory record.</summary>
-    internal sealed class ZipEntryInfo
+    public sealed class ZipEntryInfo
     {
         public ZipEntryInfo(Int32 index, String name, Int32 method, Boolean encrypted, Boolean utf8Flag, UInt32 crc32, UInt64 size, UInt64 compressedSize)
         {
@@ -45,6 +46,29 @@
         public Boolean BadName => !this.Utf8Flag && this.Name.Any(c => c > 127);
 
         public Boolean Supported => !this.BadMethod && !this.BadName;
+
+        // What is wrong with the entry, e.g. "BZip2, no UTF-8 flag"
+        public String Describe()
+        {
+            var parts = new List<String>();
+
+            if (this.Encrypted)
+            {
+                parts.Add("encrypted");
+            }
+
+            if ((this.Method != 8) || this.Encrypted)
+            {
+                parts.Add(this.MethodName);
+            }
+
+            if (this.BadName)
+            {
+                parts.Add("no UTF-8 flag");
+            }
+
+            return String.Join(", ", parts);
+        }
 
         public String MethodName => this.Method switch
         {

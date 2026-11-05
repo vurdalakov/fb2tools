@@ -9,7 +9,7 @@
     /// Minimal zip central-directory reader. ZipArchiveEntry does not expose the compression
     /// method, so we read it from the raw directory ourselves.
     /// </summary>
-    internal static class ZipDirectory
+    public static class ZipDirectory
     {
         static ZipDirectory() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 

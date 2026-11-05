@@ -10,6 +10,9 @@
     <PackageVersion Include="SharpCompress" Version="0.50.8" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.14" />
   </ItemGroup>
+  <ItemGroup Label="Fb2Editor">
+    <PackageVersion Include="Svg" Version="3.4.8" />
+  </ItemGroup>
   <ItemGroup Label="Fb2Opds">
     <PackageVersion Include="StbImageSharp" Version="2.30.16" />
     <PackageVersion Include="StbImageResizeSharp" Version="0.97.1" />

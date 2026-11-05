@@ -38,6 +38,8 @@ Each repacked archive is verified (names, sizes, CRC32) before it replaces the o
 
 * `Author - Title.fb2`, or
 * `Author - [Series, volume] - Title.fb2` when the book has a `<sequence>`; `[Series]` if the sequence has no `number`.
+* If the book has no author, the `Author - ` part is omitted: `Title.fb2` or `[Series, volume] - Title.fb2`.
+* If the book has a translator, ` (пер. Translator)` is added at the end of the name: `Ласло Краснахоркаи - Рождение убийцы (пер. Оксана Якименко).fb2`.
 
 Examples:
 
@@ -47,8 +49,9 @@ Examples:
 Rules:
 
 * `Author` is the first `<author>`: `first-name` + `last-name` (the middle name is ignored; `nickname` is used if there is no real name). `Title` is `<book-title>`, `Series`/`volume` come from the first `<sequence>` (`name` and `number` attributes).
+* In the expected name `:` is changed to `.` (`Title: Subtitle` gives `Title. Subtitle`) and the other characters that cannot be in a file name (`\ / * ? " < > |`) are removed.
 * Both sides are compared Unicode-normalized, with white space collapsed and ignoring characters that cannot be in a file name (`\ / : * ? " < > |`) and `_`. Letter case matters.
-* Files whose XML cannot be read, or that have no author or title, are reported too. A mismatch is shown with the expected name.
+* Files whose XML cannot be read, or that have no title, are reported too. A mismatch is shown with the expected name.
 
 ## fb2opds
 

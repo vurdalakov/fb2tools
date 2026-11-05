@@ -7,21 +7,17 @@
     /// <summary>
     /// Builds the file name an FB2 book is expected to have:
     /// <c>Author - Title</c> or <c>Author - [Series, volume] - Title</c>.
+    /// If the book has no author, the <c>Author - </c> part is omitted.
+    /// If the book has a translator, <c> (пер. Translator)</c> is added at the end.
     /// </summary>
     public static class Fb2FileName
     {
         private const String InvalidCharacters = "\\/:*?\"<>|";
 
-        // Returns the expected name without extension, or null (and the reason) if the book has no author or title
+        // Returns the expected name without extension, or null (and the reason) if the book has no title; a missing author is not a problem
         public static String Build(Fb2Info info, out String problem)
         {
             problem = null;
-
-            if (String.IsNullOrEmpty(info.Author))
-            {
-                problem = "no author in XML";
-                return null;
-            }
 
             if (String.IsNullOrEmpty(info.Title))
             {
@@ -29,7 +25,12 @@
                 return null;
             }
 
-            var name = new StringBuilder(info.Author).Append(" - ");
+            var name = new StringBuilder();
+
+            if (!String.IsNullOrEmpty(info.Author))
+            {
+                name.Append(info.Author).Append(" - ");
+            }
 
             if (!String.IsNullOrEmpty(info.Series))
             {
@@ -43,13 +44,20 @@
                 name.Append("] - ");
             }
 
-            return name.Append(info.Title).ToString();
+            name.Append(info.Title);
+
+            if (!String.IsNullOrEmpty(info.Translator))
+            {
+                name.Append(" (пер. ").Append(info.Translator).Append(')');
+            }
+
+            return name.ToString();
         }
 
-        // The name as it can appear on disk: characters that are invalid in file names are removed
+        // The name as it can appear on disk: ':' is changed to '.', other characters that are invalid in file names are removed
         public static String MakeFileSystemSafe(String name)
         {
-            var safe = new String(name.Where(c => (InvalidCharacters.IndexOf(c) < 0) && !Char.IsControl(c)).ToArray());
+            var safe = new String(name.Replace(':', '.').Where(c => (InvalidCharacters.IndexOf(c) < 0) && !Char.IsControl(c)).ToArray());
 
             return safe.TrimEnd('.', ' ');
         }

@@ -22,7 +22,8 @@
                 + "  - .fb2 file without a matching .fb2.zip\n"
                 + "Problem reported by 'test' only:\n"
                 + "  - .fb2 / .fb2.zip file name that does not follow the book (title-info author, title, sequence):\n"
-                + "    'Author - Title' or 'Author - [Series, volume] - Title'\n\n"
+                + "    'Author - Title' or 'Author - [Series, volume] - Title'\n"
+                + "    ('Author - ' is omitted if the book has no author; ' (пер. Translator)' is added if it has a translator)\n\n"
                 + "Encrypted entries are reported but cannot be repacked.");
 
             rootCommand.Subcommands.Add(Program.CreateCommand("test", "Report problems, change nothing", true, true, false, true));
@@ -169,7 +170,7 @@
                 Console.WriteLine(zipFilePath);
                 foreach (var entry in badEntries)
                 {
-                    Console.WriteLine($"    {entry.Name}  [{Program.Describe(entry)}]");
+                    Console.WriteLine($"    {entry.Name}  [{entry.Describe()}]");
                 }
 
                 if (!repack)
@@ -223,7 +224,7 @@
 
                 try
                 {
-                    Program.PackFile(fb2FilePath, zipFilePath);
+                    Fb2ZipPacker.Pack(fb2FilePath, zipFilePath);
                     packed++;
                     Console.WriteLine($"    [PACKED] -> {Path.GetFileName(zipFilePath)}");
                 }
@@ -238,80 +239,6 @@
             Console.WriteLine($"Found {orphans} .fb2 file(s) without .fb2.zip" + (pack ? $"; {packed} packed" : String.Empty) + ".");
 
             return failed;
-        }
-
-        private static String Describe(ZipEntryInfo entry)
-        {
-            var parts = new List<String>();
-
-            if (entry.Encrypted)
-            {
-                parts.Add("encrypted");
-            }
-
-            if ((entry.Method != 8) || entry.Encrypted)
-            {
-                parts.Add(entry.MethodName);
-            }
-
-            if (entry.BadName)
-            {
-                parts.Add("no UTF-8 flag");
-            }
-
-            return String.Join(", ", parts);
-        }
-
-        /// <summary>Creates the zip file holding the single file: Deflate, UTF-8 name.</summary>
-        private static void PackFile(String filePath, String zipFilePath)
-        {
-            var tempFilePath = zipFilePath + ".pack.tmp";
-            try
-            {
-                using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
-                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create, false, new UTF8Encoding(false)))
-                {
-                    var entry = archive.CreateEntry(Path.GetFileName(filePath), CompressionLevel.Optimal);
-
-                    var lastWriteTime = File.GetLastWriteTime(filePath);
-                    if ((lastWriteTime.Year >= 1980) && (lastWriteTime.Year <= 2107))
-                    {
-                        entry.LastWriteTime = lastWriteTime;
-                    }
-
-                    using (var input = File.OpenRead(filePath))
-                    using (var output = entry.Open())
-                    {
-                        input.CopyTo(output);
-                    }
-                }
-
-                // Verify: method, UTF-8 flag, CRC and size
-                var entries = ZipDirectory.Read(tempFilePath, Encoding.UTF8);
-                if ((entries.Count != 1) || !entries[0].Supported)
-                {
-                    throw new InvalidDataException("Verification failed: unexpected archive layout.");
-                }
-
-                using (var input = File.OpenRead(filePath))
-                {
-                    var crc = new Crc32();
-                    crc.Append(input);
-                    if ((crc.GetCurrentHashAsUInt32() != entries[0].Crc32) || ((UInt64)input.Length != entries[0].Size))
-                    {
-                        throw new InvalidDataException("Verification failed: content mismatch.");
-                    }
-                }
-
-                File.Move(tempFilePath, zipFilePath, false);
-            }
-            finally
-            {
-                if (File.Exists(tempFilePath))
-                {
-                    File.Delete(tempFilePath);
-                }
-            }
         }
 
         private static Boolean Repack(String zipFilePath, List<ZipEntryInfo> entries, Boolean backup)
