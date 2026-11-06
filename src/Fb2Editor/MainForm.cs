@@ -4,14 +4,14 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows.Forms;
 
     using Vurdalakov;
 
     public partial class MainForm : Form
     {
-        private const String ParentDirectoryText = "<parent directory>";
-        private const String FolderImageKey = "folder";
         private const String Fb2ImageKey = "fb2";
         private const String ZipImageKey = "zip";
         private const String ErrorImageKey = "error";
@@ -19,6 +19,7 @@
 
         private readonly AppSettings _settings = AppSettings.Load();
         private DirectoryInfo _rootFolder;
+        private CancellationTokenSource _checkCancellation; // stops the background tests of the previous list
         private Boolean _updatingFields; // the text fields are being filled by the program, not edited by the user
         private Boolean _modified; // the user changed a text field
         private Boolean _hasProblems; // the selected file does not pass the tests
@@ -29,7 +30,7 @@
 
             this.listViewFiles.SizeChanged += (sender, e) => this.FitNameColumn();
             this.listViewFiles.SelectedIndexChanged += (sender, e) => this.ShowSelectedItem();
-            this.listViewFiles.ItemActivate += (sender, e) => this.OpenSelectedFolder(); // double-click or Enter
+            this.FormClosed += (sender, e) => this._checkCancellation?.Cancel();
 
             foreach (var textBox in new[] { this.textBoxAuthorFirst, this.textBoxAuthorLast, this.textBoxTranslatorFirst, this.textBoxTranslatorLast, this.textBoxTitle, this.textBoxSeriesTitle, this.textBoxSeriesNumber })
             {
@@ -46,12 +47,6 @@
                 ColorDepth = ColorDepth.Depth32Bit,
                 ImageSize = SystemInformation.SmallIconSize,
             };
-
-            var folderImage = ShellIcons.GetFolderImage();
-            if (folderImage != null)
-            {
-                imageList.Images.Add(MainForm.FolderImageKey, folderImage);
-            }
 
             // File icons are drawn from the SVG files at the size of a small icon, so they are sharp at any DPI
             imageList.Images.Add(MainForm.Fb2ImageKey, SvgIcons.Render("fb2file.svg", imageList.ImageSize.Width));
@@ -77,7 +72,7 @@
 
             if (this._rootFolder != null)
             {
-                this.FillFileList(this._rootFolder);
+                this.FillFileList();
             }
         }
 
@@ -103,84 +98,120 @@
                 this._settings.RootFolder = this._rootFolder.FullName;
                 this._settings.Save();
                 this.ShowRootFolder();
-                this.FillFileList(this._rootFolder);
+                this.FillFileList();
             }
         }
 
-        // Lists, sorted by name: "<parent directory>" (not in the root folder), sub-folders, then .fb2 and .fb2.zip files; selects the file with the given name or else the first entry
-        private void FillFileList(DirectoryInfo folder, String selectFileName = null)
+        // Lists all .fb2 and .fb2.zip files of the root folder and its sub-folders, with paths relative to the root folder, sorted by folder and name.
+        // Hidden files and folders and those with a name that starts with a dot are not shown. Selects the given file or else the first one.
+        private void FillFileList(String selectFilePath = null)
         {
-            List<DirectoryInfo> subfolders;
-            List<FileInfo> files;
+            if (this._rootFolder == null)
+            {
+                return;
+            }
 
-            // Hidden files and folders and those with a name that starts with a dot are not shown
-            var options = new EnumerationOptions { AttributesToSkip = FileAttributes.Hidden };
+            var rootPath = this._rootFolder.FullName;
+            var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.Hidden, IgnoreInaccessible = true };
 
+            List<(FileInfo File, String RelativePath)> files;
             try
             {
-                subfolders = folder.EnumerateDirectories("*", options)
-                    .Where(directory => !directory.Name.StartsWith('.'))
-                    .OrderBy(directory => directory.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .ToList();
-                files = folder.EnumerateFiles("*", options)
-                    .Where(file => !file.Name.StartsWith('.') && (file.Name.EndsWith(".fb2", StringComparison.OrdinalIgnoreCase) || file.Name.EndsWith(".fb2.zip", StringComparison.OrdinalIgnoreCase)))
-                    .OrderBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase)
+                files = this._rootFolder.EnumerateFiles("*", options)
+                    .Where(file => file.Name.EndsWith(".fb2", StringComparison.OrdinalIgnoreCase) || file.Name.EndsWith(".fb2.zip", StringComparison.OrdinalIgnoreCase))
+                    .Select(file => (File: file, RelativePath: Path.GetRelativePath(rootPath, file.FullName)))
+                    .Where(entry => !entry.RelativePath.Split(Path.DirectorySeparatorChar).Any(segment => segment.StartsWith('.')))
+                    .OrderBy(entry => Path.GetDirectoryName(entry.RelativePath), StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(entry => entry.File.Name, StringComparer.CurrentCultureIgnoreCase)
                     .ToList();
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
-                // Stay in the current folder
-                this.toolStripStatusLabelFile.Text = $"{folder.FullName}: {exception.Message}";
+                this.toolStripStatusLabelFile.Text = $"{rootPath}: {exception.Message}";
                 return;
             }
 
-            this.toolStripTextBoxDirectoryPath.Text = folder.FullName;
+            var entries = new List<(ListViewItem Item, FileInfo File)>();
+
+            // The first visible item is remembered, so that the list does not jump when it is refilled
+            var topItem = this.listViewFiles.TopItem;
+            var topPath = (topItem?.Tag as FileInfo)?.FullName;
+            var topIndex = topItem?.Index ?? 0;
 
             this.listViewFiles.BeginUpdate();
             this.listViewFiles.Items.Clear();
 
-            if ((folder.Parent != null) && !this.IsRootFolder(folder))
+            foreach (var (file, relativePath) in files)
             {
-                this.listViewFiles.Items.Add(new ListViewItem(MainForm.ParentDirectoryText) { Tag = folder.Parent, ImageKey = MainForm.FolderImageKey });
-            }
+                var isZip = file.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+                var item = new ListViewItem(relativePath) { Tag = file, ImageKey = isZip ? MainForm.ZipImageKey : MainForm.Fb2ImageKey };
 
-            foreach (var subfolder in subfolders)
-            {
-                this.listViewFiles.Items.Add(new ListViewItem(subfolder.Name) { Tag = subfolder, ImageKey = MainForm.FolderImageKey });
-            }
-
-            foreach (var file in files)
-            {
-                var item = new ListViewItem(file.Name) { Tag = file };
-                this.ShowFileState(item, file);
                 this.listViewFiles.Items.Add(item);
+                entries.Add((item, file));
             }
 
             this.listViewFiles.EndUpdate();
 
+            // The tests of all files can take a while, so the list is shown first and the error icons appear as the tests finish
+            this.StartBackgroundTests(entries);
+
             if (this.listViewFiles.Items.Count > 0)
             {
-                var item = this.listViewFiles.Items.Cast<ListViewItem>().FirstOrDefault(i => (selectFileName != null) && (i.Tag is FileInfo fileInfo) && (fileInfo.Name == selectFileName)) ?? this.listViewFiles.Items[0];
+                var item = this.listViewFiles.Items.Cast<ListViewItem>().FirstOrDefault(i => (selectFilePath != null) && String.Equals(((FileInfo)i.Tag).FullName, selectFilePath, StringComparison.OrdinalIgnoreCase)) ?? this.listViewFiles.Items[0];
                 item.Selected = true;
                 item.Focused = true;
+
+                // Back to the old scroll position (by name, else by position); the selected item is scrolled into view only if it is outside
+                var top = this.listViewFiles.Items.Cast<ListViewItem>().FirstOrDefault(i => (topPath != null) && String.Equals(((FileInfo)i.Tag).FullName, topPath, StringComparison.OrdinalIgnoreCase))
+                    ?? this.listViewFiles.Items[Math.Min(topIndex, this.listViewFiles.Items.Count - 1)];
+                this.listViewFiles.TopItem = top;
                 item.EnsureVisible();
             }
             else
             {
                 this.ShowInfo(null);
                 this.ShowTestResults(null);
-                this.toolStripStatusLabelFile.Text = $"No sub-folders or .fb2 / .fb2.zip files in {folder.FullName}";
+                this.toolStripTextBoxDirectoryPath.Text = String.Empty;
+                this.textBoxFileName.Text = String.Empty;
+                this.toolStripStatusLabelFile.Text = $"No .fb2 or .fb2.zip files in {rootPath}";
             }
         }
 
-        private Boolean IsRootFolder(DirectoryInfo folder) => (this._rootFolder != null) && String.Equals(Path.TrimEndingDirectorySeparator(folder.FullName), Path.TrimEndingDirectorySeparator(this._rootFolder.FullName), StringComparison.OrdinalIgnoreCase);
-
-        private void OpenSelectedFolder()
+        // Tests the files one by one on another thread; the results are shown on the UI thread. A new list stops the tests of the old one.
+        private void StartBackgroundTests(List<(ListViewItem Item, FileInfo File)> entries)
         {
-            if ((this.listViewFiles.SelectedItems.Count > 0) && (this.listViewFiles.SelectedItems[0].Tag is DirectoryInfo folder))
+            this._checkCancellation?.Cancel();
+
+            var cancellation = new CancellationTokenSource();
+            this._checkCancellation = cancellation;
+
+            Task.Run(() =>
             {
-                this.FillFileList(folder);
-            }
+                foreach (var (item, file) in entries)
+                {
+                    if (cancellation.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    var problems = MainForm.CheckFile(file);
+
+                    try
+                    {
+                        this.BeginInvoke(new Action(() =>
+                        {
+                            if (!cancellation.IsCancellationRequested)
+                            {
+                                this.ShowFileState(item, file, problems);
+                            }
+                        }));
+                    }
+                    catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+                    {
+                        return; // the form is closed
+                    }
+                }
+            });
         }
 
         private void ShowSelectedItem()
@@ -191,15 +222,13 @@
                 return;
             }
 
-            if (this.listViewFiles.SelectedItems[0].Tag is not FileInfo file)
-            {
-                this.ShowInfo(null);
-                this.ShowTestResults(null);
-                this.toolStripStatusLabelFile.Text = ((DirectoryInfo)this.listViewFiles.SelectedItems[0].Tag!).FullName;
-                return;
-            }
+            var item = this.listViewFiles.SelectedItems[0];
+            var file = (FileInfo)item.Tag;
 
-            var problems = this.ShowFileState(this.listViewFiles.SelectedItems[0], file);
+            this.toolStripTextBoxDirectoryPath.Text = file.DirectoryName;
+
+            var problems = MainForm.CheckFile(file);
+            this.ShowFileState(item, file, problems);
 
             try
             {
@@ -212,28 +241,30 @@
                 this.toolStripStatusLabelFile.Text = $"{file.Name}: {exception.Message}";
             }
 
+            this.textBoxFileName.Text = file.Name;
             this.ShowTestResults(problems);
         }
 
-        // The icon of a file is the error icon if the file does not pass the tests of "fb2zip test" (the tool tip tells why), else the FB2 or ZIP icon
-        private List<String> ShowFileState(ListViewItem item, FileInfo file)
+        // What is wrong with the file: the tests of "fb2zip test"
+        private static List<String> CheckFile(FileInfo file)
         {
-            List<String> problems;
             try
             {
-                problems = Fb2FileChecker.Check(file.FullName);
+                return Fb2FileChecker.Check(file.FullName);
             }
             catch (Exception exception)
             {
-                problems = new List<String> { $"cannot check: {exception.Message}" };
+                return new List<String> { $"cannot check: {exception.Message}" };
             }
+        }
 
+        // The icon of a file is the error icon if the file does not pass the tests (the tool tip tells why), else the FB2 or ZIP icon
+        private void ShowFileState(ListViewItem item, FileInfo file, List<String> problems)
+        {
             var isZip = file.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
 
             item.ImageKey = (problems.Count > 0) ? MainForm.ErrorImageKey : (isZip ? MainForm.ZipImageKey : MainForm.Fb2ImageKey);
             item.ToolTipText = String.Join("\n", problems);
-
-            return problems;
         }
 
         private FileInfo GetSelectedFile() => (this.listViewFiles.SelectedItems.Count > 0) ? this.listViewFiles.SelectedItems[0].Tag as FileInfo : null;
@@ -247,7 +278,7 @@
 
         private void UpdateButtons()
         {
-            this.buttonReRead.Enabled = this._modified;
+            this.buttonReRead.Enabled = true; // the right pane is disabled as a whole when no file is selected
             this.buttonSave.Enabled = this._modified || this._hasProblems;
 
             // Pack is available only if an FB2 file (not a zip) is selected
@@ -292,24 +323,17 @@
 
         private void ShowError(String text) => MessageBox.Show(this, text, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-        // Throws away the changes in the text fields
+        // Throws away the changes in the text fields, reads the file again and runs the tests again
         private void ReReadSelectedFile()
         {
-            var file = this.GetSelectedFile();
-            if (file == null)
+            if (this.GetSelectedFile() == null)
             {
                 return;
             }
 
-            try
-            {
-                this.ShowInfo(Fb2InfoReader.ReadFile(file.FullName));
-                this.toolStripStatusLabelFile.Text = $"{file.FullName} (re-read)";
-            }
-            catch (Exception exception)
-            {
-                this.ShowError($"Cannot read {file.Name}:\n{exception.Message}");
-            }
+            this.ShowSelectedItem();
+
+            this.toolStripStatusLabelFile.Text += " (re-read)";
         }
 
         // Packs the FB2 file into a .fb2.zip next to it and, only if that succeeded, deletes the FB2 file
@@ -348,7 +372,7 @@
             }
 
             // Select the zip in the refreshed list
-            this.FillFileList(file.Directory, Path.GetFileName(zipFilePath));
+            this.FillFileList(zipFilePath);
             this.toolStripStatusLabelFile.Text = $"{zipFilePath} (packed)";
         }
 
@@ -380,13 +404,18 @@
                 if (newName != null)
                 {
                     // The selection of the renamed file loads what is really in the file now
-                    this.FillFileList(file.Directory, newName);
-                    this.toolStripStatusLabelFile.Text = $"{Path.Combine(file.DirectoryName, newName)} (saved and renamed)";
+                    var newPath = Path.Combine(file.DirectoryName, newName);
+                    this.FillFileList(newPath);
+                    this.toolStripStatusLabelFile.Text = $"{newPath} (saved and renamed)";
                 }
                 else
                 {
                     this.ShowInfo(Fb2InfoReader.ReadFile(file.FullName));
-                    this.ShowTestResults(this.ShowFileState(this.listViewFiles.SelectedItems[0], file)); // the file may pass or fail the tests differently now
+
+                    // The file may pass or fail the tests differently now
+                    var problems = MainForm.CheckFile(file);
+                    this.ShowFileState(this.listViewFiles.SelectedItems[0], file, problems);
+                    this.ShowTestResults(problems);
                     this.toolStripStatusLabelFile.Text = $"{file.FullName} (saved)";
                 }
             }

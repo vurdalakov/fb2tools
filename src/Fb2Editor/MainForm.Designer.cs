@@ -43,6 +43,7 @@
             this.splitContainer1 = new SplitContainer();
             this.listViewFiles = new ListView();
             this.columnHeader1 = new ColumnHeader();
+            this.buttonPack = new Button();
             this.textBoxTestResults = new TextBox();
             this.label5 = new Label();
             this.buttonSave = new Button();
@@ -60,7 +61,8 @@
             this.label1 = new Label();
             this.toolStrip1 = new ToolStrip();
             this.toolStripTextBoxDirectoryPath = new ToolStripTextBox();
-            this.buttonPack = new Button();
+            this.textBoxFileName = new TextBox();
+            this.label6 = new Label();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.splitContainer1).BeginInit();
@@ -111,7 +113,7 @@
             // 
             this.statusStrip1.ImageScalingSize = new Size(24, 24);
             this.statusStrip1.Items.AddRange(new ToolStripItem[] { this.toolStripStatusLabelFile, this.toolStripStatusLabelStatus, this.toolStripStatusLabelRootFolder });
-            this.statusStrip1.Location = new Point(0, 686);
+            this.statusStrip1.Location = new Point(0, 752);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new Size(1612, 32);
             this.statusStrip1.TabIndex = 2;
@@ -137,7 +139,7 @@
             // splitContainer1
             // 
             this.splitContainer1.Dock = DockStyle.Fill;
-            this.splitContainer1.FixedPanel = FixedPanel.Panel1;
+            this.splitContainer1.FixedPanel = FixedPanel.Panel2;
             this.splitContainer1.Location = new Point(0, 64);
             this.splitContainer1.Name = "splitContainer1";
             // 
@@ -147,6 +149,8 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.label6);
+            this.splitContainer1.Panel2.Controls.Add(this.textBoxFileName);
             this.splitContainer1.Panel2.Controls.Add(this.buttonPack);
             this.splitContainer1.Panel2.Controls.Add(this.textBoxTestResults);
             this.splitContainer1.Panel2.Controls.Add(this.label5);
@@ -163,7 +167,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.textBoxAuthorLast);
             this.splitContainer1.Panel2.Controls.Add(this.textBoxAuthorFirst);
             this.splitContainer1.Panel2.Controls.Add(this.label1);
-            this.splitContainer1.Size = new Size(1612, 622);
+            this.splitContainer1.Size = new Size(1612, 688);
             this.splitContainer1.SplitterDistance = 778;
             this.splitContainer1.TabIndex = 3;
             // 
@@ -175,7 +179,7 @@
             this.listViewFiles.Location = new Point(0, 0);
             this.listViewFiles.MultiSelect = false;
             this.listViewFiles.Name = "listViewFiles";
-            this.listViewFiles.Size = new Size(778, 622);
+            this.listViewFiles.Size = new Size(778, 688);
             this.listViewFiles.TabIndex = 0;
             this.listViewFiles.UseCompatibleStateImageBehavior = false;
             this.listViewFiles.View = View.Details;
@@ -184,9 +188,18 @@
             // 
             this.columnHeader1.Text = "Name";
             // 
+            // buttonPack
+            // 
+            this.buttonPack.Location = new Point(546, 330);
+            this.buttonPack.Name = "buttonPack";
+            this.buttonPack.Size = new Size(262, 43);
+            this.buttonPack.TabIndex = 17;
+            this.buttonPack.Text = "Pack File";
+            this.buttonPack.UseVisualStyleBackColor = true;
+            // 
             // textBoxTestResults
             // 
-            this.textBoxTestResults.Location = new Point(29, 392);
+            this.textBoxTestResults.Location = new Point(29, 454);
             this.textBoxTestResults.Multiline = true;
             this.textBoxTestResults.Name = "textBoxTestResults";
             this.textBoxTestResults.ReadOnly = true;
@@ -196,7 +209,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new Point(29, 352);
+            this.label5.Location = new Point(29, 414);
             this.label5.Name = "label5";
             this.label5.Size = new Size(102, 25);
             this.label5.TabIndex = 15;
@@ -204,7 +217,7 @@
             // 
             // buttonSave
             // 
-            this.buttonSave.Location = new Point(147, 268);
+            this.buttonSave.Location = new Point(147, 330);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new Size(368, 43);
             this.buttonSave.TabIndex = 14;
@@ -213,7 +226,7 @@
             // 
             // buttonReRead
             // 
-            this.buttonReRead.Location = new Point(29, 268);
+            this.buttonReRead.Location = new Point(29, 330);
             this.buttonReRead.Name = "buttonReRead";
             this.buttonReRead.Size = new Size(92, 43);
             this.buttonReRead.TabIndex = 11;
@@ -222,14 +235,14 @@
             // 
             // textBoxSeriesNumber
             // 
-            this.textBoxSeriesNumber.Location = new Point(697, 206);
+            this.textBoxSeriesNumber.Location = new Point(697, 268);
             this.textBoxSeriesNumber.Name = "textBoxSeriesNumber";
             this.textBoxSeriesNumber.Size = new Size(111, 31);
             this.textBoxSeriesNumber.TabIndex = 10;
             // 
             // textBoxSeriesTitle
             // 
-            this.textBoxSeriesTitle.Location = new Point(147, 206);
+            this.textBoxSeriesTitle.Location = new Point(147, 268);
             this.textBoxSeriesTitle.Name = "textBoxSeriesTitle";
             this.textBoxSeriesTitle.Size = new Size(532, 31);
             this.textBoxSeriesTitle.TabIndex = 9;
@@ -237,7 +250,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new Point(29, 209);
+            this.label4.Location = new Point(29, 271);
             this.label4.Name = "label4";
             this.label4.Size = new Size(62, 25);
             this.label4.TabIndex = 8;
@@ -245,7 +258,7 @@
             // 
             // textBoxTitle
             // 
-            this.textBoxTitle.Location = new Point(147, 142);
+            this.textBoxTitle.Location = new Point(147, 204);
             this.textBoxTitle.Name = "textBoxTitle";
             this.textBoxTitle.Size = new Size(661, 31);
             this.textBoxTitle.TabIndex = 7;
@@ -253,7 +266,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new Point(29, 145);
+            this.label3.Location = new Point(29, 207);
             this.label3.Name = "label3";
             this.label3.Size = new Size(48, 25);
             this.label3.TabIndex = 6;
@@ -261,14 +274,14 @@
             // 
             // textBoxTranslatorLast
             // 
-            this.textBoxTranslatorLast.Location = new Point(480, 82);
+            this.textBoxTranslatorLast.Location = new Point(480, 144);
             this.textBoxTranslatorLast.Name = "textBoxTranslatorLast";
             this.textBoxTranslatorLast.Size = new Size(328, 31);
             this.textBoxTranslatorLast.TabIndex = 5;
             // 
             // textBoxTranslatorFirst
             // 
-            this.textBoxTranslatorFirst.Location = new Point(147, 82);
+            this.textBoxTranslatorFirst.Location = new Point(147, 144);
             this.textBoxTranslatorFirst.Name = "textBoxTranslatorFirst";
             this.textBoxTranslatorFirst.Size = new Size(307, 31);
             this.textBoxTranslatorFirst.TabIndex = 4;
@@ -276,7 +289,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new Point(29, 85);
+            this.label2.Location = new Point(29, 147);
             this.label2.Name = "label2";
             this.label2.Size = new Size(92, 25);
             this.label2.TabIndex = 3;
@@ -284,14 +297,14 @@
             // 
             // textBoxAuthorLast
             // 
-            this.textBoxAuthorLast.Location = new Point(480, 28);
+            this.textBoxAuthorLast.Location = new Point(480, 90);
             this.textBoxAuthorLast.Name = "textBoxAuthorLast";
             this.textBoxAuthorLast.Size = new Size(328, 31);
             this.textBoxAuthorLast.TabIndex = 2;
             // 
             // textBoxAuthorFirst
             // 
-            this.textBoxAuthorFirst.Location = new Point(147, 28);
+            this.textBoxAuthorFirst.Location = new Point(147, 90);
             this.textBoxAuthorFirst.Name = "textBoxAuthorFirst";
             this.textBoxAuthorFirst.Size = new Size(307, 31);
             this.textBoxAuthorFirst.TabIndex = 1;
@@ -299,7 +312,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new Point(29, 31);
+            this.label1.Location = new Point(29, 93);
             this.label1.Name = "label1";
             this.label1.Size = new Size(71, 25);
             this.label1.TabIndex = 0;
@@ -321,20 +334,28 @@
             this.toolStripTextBoxDirectoryPath.ReadOnly = true;
             this.toolStripTextBoxDirectoryPath.Size = new Size(1000, 31);
             // 
-            // buttonPack
+            // textBoxFileName
             // 
-            this.buttonPack.Location = new Point(546, 268);
-            this.buttonPack.Name = "buttonPack";
-            this.buttonPack.Size = new Size(262, 43);
-            this.buttonPack.TabIndex = 17;
-            this.buttonPack.Text = "Pack File";
-            this.buttonPack.UseVisualStyleBackColor = true;
+            this.textBoxFileName.Location = new Point(147, 30);
+            this.textBoxFileName.Name = "textBoxFileName";
+            this.textBoxFileName.ReadOnly = true;
+            this.textBoxFileName.Size = new Size(661, 31);
+            this.textBoxFileName.TabIndex = 18;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new Point(29, 33);
+            this.label6.Name = "label6";
+            this.label6.Size = new Size(91, 25);
+            this.label6.TabIndex = 19;
+            this.label6.Text = "File name:";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new SizeF(10F, 25F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(1612, 718);
+            this.ClientSize = new Size(1612, 784);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.statusStrip1);
@@ -390,5 +411,7 @@
         private TextBox textBoxTestResults;
         private Label label5;
         private Button buttonPack;
+        private Label label6;
+        private TextBox textBoxFileName;
     }
 }
