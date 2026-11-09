@@ -122,9 +122,23 @@
                         switch (reader.LocalName)
                         {
                             case "author":
-                                if (info.Author == null)
+                                var author = Fb2InfoReader.ReadPerson(Fb2InfoReader.ReadElement(reader));
+                                if (author.FullName != null)
                                 {
-                                    (info.AuthorFirstName, info.AuthorLastName, info.Author) = Fb2InfoReader.ReadPerson(Fb2InfoReader.ReadElement(reader));
+                                    info.AuthorCount++;
+
+                                    if (info.Author == null)
+                                    {
+                                        (info.AuthorFirstName, info.AuthorLastName, info.Author) = author;
+                                    }
+                                }
+
+                                break;
+
+                            case "anthology":
+                                if (String.Equals(Fb2InfoReader.Clean(Fb2InfoReader.ReadElement(reader).Value), "true", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    info.Anthology = true;
                                 }
 
                                 break;

@@ -12,6 +12,12 @@
 
         public String AuthorLastName { get; set; }
 
+        // Number of authors that have a name; only the first one is in Author
+        public Int32 AuthorCount { get; set; }
+
+        // The title-info has an <anthology>true</anthology> element: the book has no author of its own (a collection)
+        public Boolean Anthology { get; set; }
+
         public String Translator { get; set; }
 
         public String TranslatorFirstName { get; set; }

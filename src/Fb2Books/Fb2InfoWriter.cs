@@ -142,7 +142,17 @@
             var titleInfo = document.Root.Elements().First();
             var before = titleInfo.ToString(SaveOptions.DisableFormatting);
 
-            Fb2InfoWriter.SetPerson(titleInfo, "author", info.AuthorFirstName, info.AuthorLastName);
+            if (info.Anthology)
+            {
+                // An anthology has no author of its own: all authors are removed
+                titleInfo.Elements().Where(e => e.Name.LocalName == "author").ToList().ForEach(e => e.Remove());
+            }
+            else
+            {
+                Fb2InfoWriter.SetPerson(titleInfo, "author", info.AuthorFirstName, info.AuthorLastName);
+            }
+
+            Fb2InfoWriter.SetAnthology(titleInfo, info.Anthology);
             Fb2InfoWriter.SetTitle(titleInfo, info.Title);
             Fb2InfoWriter.SetPerson(titleInfo, "translator", info.TranslatorFirstName, info.TranslatorLastName);
             Fb2InfoWriter.SetSequence(titleInfo, info.Series, info.SeriesNumber);
@@ -265,8 +275,22 @@
                 }
             }
 
-            Check("author first name", expected.AuthorFirstName, actual.AuthorFirstName);
-            Check("author last name", expected.AuthorLastName, actual.AuthorLastName);
+            if (expected.Anthology != actual.Anthology)
+            {
+                throw new InvalidDataException("Verification failed: anthology flag was not saved correctly.");
+            }
+
+            // If the author was cleared, the next author of the book (if any) shows up as the author
+            if (expected.Anthology)
+            {
+                // no author to check
+            }
+            else if ((Fb2InfoWriter.Normalize(expected.AuthorFirstName) != null) || (Fb2InfoWriter.Normalize(expected.AuthorLastName) != null) || (actual.Author == null))
+            {
+                Check("author first name", expected.AuthorFirstName, actual.AuthorFirstName);
+                Check("author last name", expected.AuthorLastName, actual.AuthorLastName);
+            }
+
             Check("title", expected.Title, actual.Title);
             Check("series", expected.Series, actual.Series);
             Check("series number", expected.SeriesNumber, actual.SeriesNumber);
@@ -286,6 +310,7 @@
             lastName = Fb2InfoWriter.Normalize(lastName);
 
             var person = Fb2InfoWriter.FindPerson(titleInfo, elementName);
+            var hadName = (person != null) && person.Elements().Any(c => (c.Name.LocalName is "first-name" or "last-name") && (Fb2InfoWriter.Normalize(c.Value) != null));
 
             if (person == null)
             {
@@ -313,6 +338,12 @@
 
             // A translator without any data is removed
             if ((elementName == "translator") && !person.HasElements)
+            {
+                person.Remove();
+            }
+
+            // An author whose name was cleared by the user is removed (it keeps nothing but an id); another author, if any, becomes "the" author
+            if ((elementName == "author") && hadName && (firstName == null) && (lastName == null) && !person.Elements().Any(c => c.Name.LocalName is "middle-name" or "nickname"))
             {
                 person.Remove();
             }
@@ -345,6 +376,22 @@
             if (value != null)
             {
                 Fb2InfoWriter.AddAfterLast(parent, new XElement(parent.Name.Namespace + name, value), afterNames);
+            }
+        }
+
+        // <anthology>true</anthology> is a child of title-info, next to the author elements
+        private static void SetAnthology(XElement titleInfo, Boolean anthology)
+        {
+            var elements = titleInfo.Elements().Where(e => e.Name.LocalName == "anthology").ToList();
+            var isTrue = elements.Where(e => String.Equals(Fb2InfoWriter.Normalize(e.Value), "true", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (!anthology)
+            {
+                isTrue.ForEach(e => e.Remove());
+            }
+            else if (isTrue.Count == 0)
+            {
+                Fb2InfoWriter.AddAfterLast(titleInfo, new XElement(titleInfo.Name.Namespace + "anthology", "true"), "author", "genre");
             }
         }
 

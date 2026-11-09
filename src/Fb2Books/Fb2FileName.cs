@@ -7,7 +7,7 @@
     /// <summary>
     /// Builds the file name an FB2 book is expected to have:
     /// <c>Author - Title</c> or <c>Author - [Series, volume] - Title</c>.
-    /// If the book has no author, the <c>Author - </c> part is omitted.
+    /// If the book has no author (or is an anthology), the <c>Author - </c> part is omitted.
     /// If the book has a translator, <c> (пер. Translator)</c> is added at the end.
     /// </summary>
     public static class Fb2FileName
@@ -27,7 +27,7 @@
 
             var name = new StringBuilder();
 
-            if (!String.IsNullOrEmpty(info.Author))
+            if (!info.Anthology && !String.IsNullOrEmpty(info.Author))
             {
                 name.Append(info.Author).Append(" - ");
             }
